@@ -10,7 +10,7 @@
     "persistent": false
   },
 
-  "permissions": ["storage","declarativeContent","activeTab"],
+  "permissions": ["storage","declarativeContent","activeTab","tabs"],
 
   "browser_action": {
     "default_popup": "popup.html",
@@ -24,7 +24,7 @@
 
   "content_scripts": [ {
     "js": [ "inject.js" ],
-    "matches": [ "http://*/*", "https://*/*" ],
+    "matches": [ "http://*/*", "https://*/*"],
     "run_at": "document_end"
   } ],
 

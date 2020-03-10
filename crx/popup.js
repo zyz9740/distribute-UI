@@ -20,16 +20,21 @@
 // };
 
 let start =  document.getElementById('start');
-start.onclick = function (element) {
-  sendMessage();
+let shutdown = document.getElementById('shutdown');
+
+function sendMessage(msg, tabId){
+  if(tabId){
+    chrome.tabs.sendMessage(tabId, msg);
+  }else{
+    chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
+      let lastTabId = tabs[0].id;
+      chrome.tabs.sendMessage(lastTabId, msg);
+    });
+  }
 }
 
+start.onclick = function (element) {sendMessage({type:'CAPTURE'});};
+shutdown.onclick = function (element) {sendMessage({type:'SHUTDOWN'})};
 
-function sendMessage() {
-  chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
-    let lastTabId = tabs[0].id;
-    console.log(lastTabId);
-    chrome.tabs.sendMessage(lastTabId, "Start select the UI element on screen");
-  });
-}
+
 
