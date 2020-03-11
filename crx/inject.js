@@ -24,11 +24,8 @@ if(logPos === 'HEAD') {
 log("Ready.",'info');
 
 
-/*
-    Capture
- */
-
 let collection = [];
+let targetId = '';
 let oldBorderStyle = null;
 
 function isContain(mouseX, mouseY, dom) {
@@ -47,46 +44,57 @@ function findDom(mouseX, mouseY, dom) {
     }
 }
 
-function capture() {
-    log('Capture start', 'capture');
-    try {
-        document.documentElement.addEventListener('click', function (event) {
-            event.preventDefault();
-            event.stopImmediatePropagation();   // stop the catch propagation
-            if (collection.length) collection[0].style.border = oldBorderStyle;
-            collection = [];
-            log(`Mouse at (${event.clientX}, ${event.clientY})`, 'capture');
-            findDom(event.clientX, event.clientY, document.documentElement);
-            if (collection) {
-                let target = collection[0];
-                oldBorderStyle = target.style.border;
-                target.style.border = '1px solid blue';
-                log(target.outerHTML, 'capture');
-            } else log("no element selected", 'capture')
-        },true);
-    }catch (e) {
-        log(e, 'error')
-    }
+function handleClick(event) {
+    log(`Mouse at (${event.clientX}, ${event.clientY})`, 'capture');
+    event.preventDefault();
+    event.stopImmediatePropagation();   // stop the catch propagation
+    if (collection.length) collection[0].style.border = oldBorderStyle;
+    collection = [];
+    findDom(event.clientX, event.clientY, document.documentElement);
+    if (collection) {
+        let target = collection[0];
+        oldBorderStyle = target.style.border;
+        target.style.border = '1px solid blue';
+        if(target.id) targetId = target.id;
+        else targetId = "DUI-target";
+        log("UI id: " + targetId, 'capture');
+    } else log("no element selected", 'capture')
 }
 
-function shutdown() {
+function start() {
+    log('Capture start', 'capture');
+    document.documentElement.addEventListener('click', handleClick,true);
+}
+
+function confirm() {
     log('Capture completed', 'shutdown');
     if(collection){
         let target = collection[0];
-        log(target.outerHTML, 'info')
+        log(target.outerHTML, 'info');
         chrome.runtime.sendMessage({'content': target.outerHTML})
     }else{
         log('No element is selected.Exit.','info')
     }
 }
 
+function cancel(){
+    document.documentElement.removeEventListener('click', handleClick, true)
+    let target = document.getElementById(targetId);
+    target.style.border = oldBorderStyle;
+    oldBorderStyle = [];
+    collection = [];
+    targetId = "";
+}
+
 chrome.runtime.onMessage.addListener(function(msg, _, sendResponse) {
-    log("Got message from background page: " + msg, 'info');
+    log("Got message from background page: " + msg.type, 'info');
     switch (msg.type) {
-        case 'CAPTURE':
-            capture();break;
-        case 'SHUTDOWN':
-            shutdown();break;
+        case 'START':
+            start();break;
+        case 'CONFIRM':
+            confirm();break;
+        case 'CANCEL':
+            cancel();break;
         default:
             log('Unhandled message.', 'error')
     }

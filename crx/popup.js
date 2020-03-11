@@ -20,7 +20,8 @@
 // };
 
 let start =  document.getElementById('start');
-let shutdown = document.getElementById('shutdown');
+let complete = document.getElementById('shutdown');
+let cancel = document.getElementById('cancel');
 
 function sendMessage(msg, tabId){
   if(tabId){
@@ -33,8 +34,9 @@ function sendMessage(msg, tabId){
   }
 }
 
-start.onclick = function (element) {sendMessage({type:'CAPTURE'});};
-shutdown.onclick = function (element) {sendMessage({type:'SHUTDOWN'})};
+start.onclick = function (element) {sendMessage({type:'START'});};
+complete.onclick = function (element) {sendMessage({type:'CONFIRM'})};
+cancel.onclick = function (element) {sendMessage({type:'CANCEL'})};
 
 
 

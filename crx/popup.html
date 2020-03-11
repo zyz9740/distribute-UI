@@ -2,10 +2,31 @@
 <html>
   <head>
     <meta charset="UTF-8">
+    <style>
+      button {
+        color: #fff;
+        background-color: #5cb85c;
+        display: inline-block;
+        padding: 6px 12px;
+        margin-bottom: 10px;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.42857143;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: middle;
+        border: 1px solid #4cae4c;
+        border-radius: 4px;
+      }
+      body{
+        text-align: center;
+      }
+    </style>
   </head>
   <body>
-    <button id="start" style="width: 100px;height: 50px">开始选择组件</button>
-    <button id="shutdown" style="width: 100px;height: 50px">选择完成</button>
+    <button id="start">选取元素</button>
+    <button id="shutdown">确认选取</button>
+    <button id="cancel">取消选取</button>
     <script src="popup.js" ></script>
   </body>
 </html>
