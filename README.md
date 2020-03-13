@@ -33,3 +33,20 @@ The repository that record the progress of my undergraduate graduation design
   - Then, click the CONFIRM button to send the element to sever, the server will render a HTML page back to the web. Beside, a backup will be stored in database. By using a server, a remote UI distribution will come true in the future work.
   - Or, you can click the CANCEL button to cancel the capture behavior.
 - Our next step is optimizing our select algorithm. 頑張れ!
+
+### 2020.3.13
+
+**Work**
+- Change the method of select HTML element from user's click action to Chrome local devtools. now, users need to open the inspect console to select element.The reason for this is that by using Chrome devtools users can select the element more precisely
+- We build a new branch called devtools to separate between the two method of element selection.
+
+**Future**
+
+We complete the top two "Overlook" in 3.10's notes. Now, we should give a more specific description of step three.
+- First, as to the style of element. We have two approaches. 
+    - One is copy all stylesheet, depending on the remote browser to render it.
+    - One is separate related styles as well, I think this is more challenging and meaningful. So I'd like to learn more about CSS render rules, including but not limited to:
+        - The method that web browser uses to render the HTML element from a data structure built by CSS
+        - How to present the separated CSS and use that to reconstruct UI element
+- Second, about javascript, I wanna to build a JS RPC structure. But more knowledge should be learned.
+- Third, reading related papers. Some coding experience has receive, it's time to learn widely from others perspective.

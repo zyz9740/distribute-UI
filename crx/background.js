@@ -2,7 +2,42 @@
 
 let lastTabId = 0;
 
-chrome.runtime.onMessage.addListener(function(req, sender){
+// communication with popup
+function sendMessage(msg, tabId){
+    console.log("Send message\t:", msg, " to tab:\t", tabId);
+    let port = connections[tabId];
+    if(port){
+        port.postMessage({name: 'confirm'})
+    }else{
+        console.log("Open the devtools");
+    }
+}
+
+//communication with devtools
+var connections = {};       // mapping the tabId to port
+
+chrome.runtime.onConnect.addListener(function (port) {
+    console.log("Receive connection from dev.")
+
+    // Listen to messages sent from the DevTools page
+    port.onMessage.addListener(function (message, sender, sendResponse) {
+        console.log(message);
+        if(message.name == 'element'){
+            if(message.content) {
+                send2Server({content: message.content})
+            }else{
+                console.log("Error in devtools");
+            }
+        } else if(message.name == 'init'){
+            connections[message.tabId] = port;
+            console.log("Init tabId:", message.tabId);
+            return;
+        }
+    });
+});
+
+
+function send2Server(req){
     console.log(req.content);
     // Close the last page if it exists
     if(lastTabId) {
@@ -26,8 +61,7 @@ chrome.runtime.onMessage.addListener(function(req, sender){
         })
 
     });
-
-});
+};
 
 
 

@@ -21,6 +21,7 @@
       "128": "images/get_started128.png"
     }
   },
+  "devtools_page": "devtools.html",
 
   "content_scripts": [ {
     "js": [ "inject.js" ],
