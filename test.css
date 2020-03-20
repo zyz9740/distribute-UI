@@ -1,3 +1,13 @@
-/*#text:hover, #topDiv:hover, #midDiv:hover {*/
-/*    border: 10px blue solid;*/
-/*}*/
+#topDiv {
+    width: 500px;
+    height: 500px;
+    background-color: red;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+#midDiv {
+    width: 200px;
+    height: 300px;
+    background-color: yellow;
+}

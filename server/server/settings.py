@@ -125,3 +125,5 @@ logging.basicConfig(
     level = logging.DEBUG,
     format = '%(asctime)s 【%(levelname)s】\t%(message)s',
 )
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240

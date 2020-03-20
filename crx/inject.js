@@ -27,6 +27,7 @@ log("Ready.",'info');
 let collection = [];
 let targetId = '';
 let oldBorderStyle = null;
+let hintBorderStyle = '1px solid blue';
 
 function isContain(mouseX, mouseY, dom) {
     if(!dom.getBoundingClientRect) return false;
@@ -53,8 +54,9 @@ function handleClick(event) {
     findDom(event.clientX, event.clientY, document.documentElement);
     if (collection) {
         let target = collection[0];
-        oldBorderStyle = target.style.border;
-        target.style.border = '1px solid blue';
+        oldBorderStyle = window.getComputedStyle(target)['border'];
+        log('Old border style:' + oldBorderStyle, 'info')
+        target.style.border = hintBorderStyle;
         if(target.id) targetId = target.id;
         else targetId = "DUI-target";
         log("UI id: " + targetId, 'capture');
@@ -68,10 +70,18 @@ function start() {
 
 function confirm() {
     log('Capture completed', 'shutdown');
+
     if(collection){
         let target = collection[0];
-        log(target.outerHTML, 'info');
-        chrome.runtime.sendMessage({'content': target.outerHTML})
+        target.style.border = oldBorderStyle;
+        let subtree = target.outerHTML;
+        let css = splitStyle(target);
+        log(subtree, 'info');
+        log(css, 'info');
+        chrome.runtime.sendMessage({'content': {
+                'subtree': JSON.stringify(subtree),
+                'css':  JSON.stringify(css)
+            }})
     }else{
         log('No element is selected.Exit.','info')
     }
@@ -99,4 +109,81 @@ chrome.runtime.onMessage.addListener(function(msg, _, sendResponse) {
             log('Unhandled message.', 'error')
     }
 });
+
+function Queue(){
+    var nodes = [];
+    const maxLength = 100;
+    var front=0, tail = 0;
+    function push(node){
+        nodes[tail] = node;
+        tail++;
+        if(tail >= maxLength) tail = tail % maxLength;
+    }
+    function pop() {
+        let top = nodes[front];
+        front++;
+        if(front >= maxLength) front = front % maxLength;
+        return top;
+    }
+    function printNodes() {
+        for(let i = front;i<tail;i++){
+            console.log(nodes[i], ' ')
+        }
+    }
+    function isEmpty() {
+        return front === tail;
+    }
+    return {push, pop, printNodes, isEmpty};
+}
+
+/**
+ * 判断父节点与子节点的样式不同
+ * @param parent
+ * @param child
+ * @returns {Array}
+ */
+function diff(parent, child) {
+    let parentStyle = window.getComputedStyle(parent);
+    let childStyle = window.getComputedStyle(child);
+    let length = parentStyle.length;
+    let diffStyleCollection = [];
+    for(let i=0;i<length;i++){
+        let property = parentStyle[i];
+        // TODO: 默认样式的去除，比如<p>默认display是inline
+        // TODO: CSS样式的筛选
+        if(parentStyle[property] !== childStyle[property]){
+            diffStyleCollection.push({'property':property, 'value':childStyle[property]})
+        }
+    }
+    return diffStyleCollection;
+}
+
+/**
+ * 从root节点分离相关的CSS
+ * @param root
+ * @returns {{rootStyle: CSSStyleDeclaration, childStyle: Array}}
+ */
+
+function splitStyle(root) {
+    var rootStyle = window.getComputedStyle(root);
+    var childrenStyle = [];
+    var q = Queue();
+    q.push(root);
+    while(!q.isEmpty()){
+        let parent = q.pop();
+        let children = parent.childNodes;
+        for(let i=0;i<children.length;i++){
+            let child = children[i];
+            // Delete the non-Element tag, <script>, <style> ...
+            // TODO: 删除Dom中的一些无意义节点
+            if(child instanceof Element && child.tagName !== "SCRIPT" && child.tagName !== "STYLE") {
+                q.push(children[i]);
+                childrenStyle.push(diff(parent, children[i]));
+            }
+        }
+    }
+    return {'rootStyle':rootStyle, 'childStyle':childrenStyle};
+}
+
+
 

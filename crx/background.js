@@ -14,7 +14,7 @@ chrome.runtime.onMessage.addListener(function(req, sender){
     $.ajax({
         url: 'http://127.0.0.1:8000/service/receiver/',
         type: 'POST',
-        data: {'content': req.content},
+        data: req.content,
         dataType: 'json',
         async: true,
     }).then(function(res){
@@ -24,7 +24,6 @@ chrome.runtime.onMessage.addListener(function(req, sender){
             lastTabId = newTab.id;
             console.log("Create new tab in tabId: ", newTab.id);
         })
-
     });
 
 });
