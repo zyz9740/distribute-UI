@@ -115,6 +115,8 @@ The repository that record the progress of my undergraduate graduation design
 
 
 
+
+
 **Chanllege**
 
 - 如何通过用户的鼠标事件确定组件呢？我们现在的方案使用过鼠标触点的位置来查找，最精确的是通过devtools来直接定位subtree，也可以通过给每个组件添加事件（性能问题、冲突问题）来完成。

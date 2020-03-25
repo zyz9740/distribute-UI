@@ -136,37 +136,16 @@ function Queue(){
     return {push, pop, printNodes, isEmpty};
 }
 
-/**
- * 判断父节点与子节点的样式不同
- * @param parent
- * @param child
- * @returns {Array}
- */
-function diff(parent, child) {
-    let parentStyle = window.getComputedStyle(parent);
-    let childStyle = window.getComputedStyle(child);
-    let length = parentStyle.length;
-    let diffStyleCollection = [];
-    for(let i=0;i<length;i++){
-        let property = parentStyle[i];
-        // TODO: 默认样式的去除，比如<p>默认display是inline
-        // TODO: CSS样式的筛选
-        if(parentStyle[property] !== childStyle[property]){
-            diffStyleCollection.push({'property':property, 'value':childStyle[property]})
-        }
-    }
-    return diffStyleCollection;
-}
 
 /**
- * 从root节点分离相关的CSS
+ * Split valid CSS property from subtree whose root is variable root.
  * @param root
- * @returns {{rootStyle: CSSStyleDeclaration, childStyle: Array}}
+ * @returns {Array}
  */
 
 function splitStyle(root) {
-    var rootStyle = window.getComputedStyle(root);
-    var childrenStyle = [];
+    var stylesBybfsOrder = [];
+    stylesBybfsOrder.push(getValidStyles(root));
     var q = Queue();
     q.push(root);
     while(!q.isEmpty()){
@@ -174,15 +153,52 @@ function splitStyle(root) {
         let children = parent.childNodes;
         for(let i=0;i<children.length;i++){
             let child = children[i];
-            // Delete the non-Element tag, <script>, <style> ...
-            // TODO: 删除Dom中的一些无意义节点
-            if(child instanceof Element && child.tagName !== "SCRIPT" && child.tagName !== "STYLE") {
+            // 删除Dom中的一些不可视节点
+            if(isVisible(child)) {
                 q.push(children[i]);
-                childrenStyle.push(diff(parent, children[i]));
+                stylesBybfsOrder.push(getValidStyles(child))
             }
         }
     }
-    return {'rootStyle':rootStyle, 'childStyle':childrenStyle};
+    return stylesBybfsOrder;
+}
+
+/***
+ * Get the non-default style property of ele
+ * @param ele
+ * @returns {Array}
+ */
+function getValidStyles(ele) {
+    var stylePropertyMapReadOnly = ele.computedStyleMap();
+    var styles = [];
+    var defaultStyles = document.getElementsByTagName('html')[0].computedStyleMap()
+    for(const [property, value] of stylePropertyMapReadOnly ){
+        // 删除默认值属性
+        if(defaultStyles.get(property) !== value.toString() && nonZero(value.toString()))
+            styles.push({'property':property, 'value': value.toString()})
+    }
+    return styles;
+}
+
+function nonZero(value) {
+    let emptyExp = ['0px', '0', 'none', 'auto','normal'];
+    for(let i=0;i<emptyExp.length;i++){
+        if(value === emptyExp[i]) return false
+    }
+    return true
+}
+
+/**
+ * Return the visibility of ele
+ * @param ele
+ * @returns {boolean}
+ */
+function isVisible(ele) {
+    console.log(ele);
+    let visible;
+    if(ele.computedStyleMap)
+        visible = ele.computedStyleMap().get('display');
+    return ele instanceof Element && ele.tagName !== "SCRIPT" && ele.tagName !== "STYLE" && visible !== 'none'
 }
 
 

@@ -46,28 +46,18 @@
     display.innerHTML = {% autoescape off %}{{ subtree }}{% endautoescape %}
     let css = {% autoescape off %}{{ css }}{% endautoescape %};
     console.log (css);
-    let root = display.firstChild;
-    let rootStyle = css.rootStyle;
-    let childStyle = css.childStyle;
     let cur = 0;
-    // Distribute the root style
-    for(let property in rootStyle){
-        root.style[property] = rootStyle[property]
-    }
-    // Distribute the children style in BFS order
     let q = Queue();
-    q.push(root);
-    while(!q.isEmpty()){
+    q.push(display);
+    while(!q.isEmpty()) {
         let parent = q.pop();
         let children = parent.childNodes;
-        for(let i=0;i<children.length;i++){
+        for (let i = 0; i < children.length; i++) {
             let child = children[i];
-            // Delete the non-Element tag, <script>, <style> ...
-            // TODO: 删除Dom中的一些无意义节点
-            if(child instanceof Element && child.tagName !== "SCRIPT" && child.tagName !== "STYLE") {
+            if (child instanceof Element && child.tagName !== "SCRIPT" && child.tagName !== "STYLE") {
                 q.push(children[i]);
-                let styles = childStyle[cur++];
-                for(let i=0;i<styles.length;i++){
+                let styles = css[cur++];
+                for (let i = 0; i < styles.length; i++) {
                     let property = styles[i]['property'];
                     child.style[property] = styles[i]['value'];
                 }
