@@ -44,6 +44,46 @@ function findDom(mouseX, mouseY, dom) {
     }
 }
 
+function loadCSSCors(stylesheet_uri) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', stylesheet_uri);
+    xhr.onload = function() {
+        xhr.onload = xhr.onerror = null;
+        if (xhr.status < 200 || xhr.status >= 300) {
+            console.error('style failed to load: ' + stylesheet_uri);
+        } else {
+            console.log('get ', stylesheet_uri ,' successfully');
+            var style_tag = document.createElement('style');
+            style_tag.appendChild(document.createTextNode(xhr.responseText));
+            document.head.appendChild(style_tag);
+        }
+    };
+    xhr.onerror = function() {
+        xhr.onload = xhr.onerror = null;
+        console.error('XHR CORS CSS fail:' + styleURI);
+    };
+    xhr.send();
+}
+
+function splitCssByRules(root) {
+    let splitRules = [];
+    let styleSheets = document.styleSheets;
+
+    for(let styleSheet of styleSheets){
+        try {
+            for (let cssRule of styleSheet.cssRules) {
+                let ele = root.querySelector(cssRule.selectorText)
+                if (ele) {
+                    splitRules.push(cssRule.cssText)
+                }
+            }
+        }catch (e) {
+            if (e instanceof DOMException){}
+        }
+    }
+    return splitRules
+}
+
 function handleClick(event) {
     log(`Mouse at (${event.clientX}, ${event.clientY})`, 'capture');
     event.preventDefault();
@@ -53,6 +93,7 @@ function handleClick(event) {
     findDom(event.clientX, event.clientY, document.documentElement);
     if (collection) {
         let target = collection[0];
+
         oldBorderStyle = target.style.border;
         target.style.border = '1px solid blue';
         if(target.id) targetId = target.id;
@@ -64,6 +105,18 @@ function handleClick(event) {
 function start() {
     log('Capture start', 'capture');
     document.documentElement.addEventListener('click', handleClick,true);
+
+    // Get cross domain style sheet
+    for(let styleSheet of document.styleSheets){
+        try {
+            let cssRules = styleSheet.cssRules;
+        }catch (e) {
+            if (e instanceof DOMException){
+                loadCSSCors(styleSheet.href)
+            }
+        }
+    }
+
 }
 
 function confirm() {
@@ -71,6 +124,8 @@ function confirm() {
     if(collection){
         let target = collection[0];
         log(target.outerHTML, 'info');
+        let splitRules = splitCssByRules(target);
+        console.log(splitRules);
         chrome.runtime.sendMessage({'content': target.outerHTML})
     }else{
         log('No element is selected.Exit.','info')
