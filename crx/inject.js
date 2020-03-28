@@ -163,30 +163,77 @@ function splitStyle(root) {
     return stylesBybfsOrder;
 }
 
+var mainProperties = [
+    {property:'display', validValue:'flex', auxProperties:['flex','flex-basis','flex-direction','flex-flow','flex-grow',
+        'flex-shrink','flex-wrap','order','align-content','align-items','align-self','justify-content',
+        'place-content','row-gap','column-gap','gap','row-gap']},
+     {property: 'display', validValue:'grid', auxProperties:['grid-template-columns','grid-template-rows',
+             'grid-template-areas', 'grid-template','grid-auto-columns','grid-auto-rows','grid-auto-flow','grid',
+             'grid-row-start', 'grid-column-start','grid-row-end','grid-column-end','grid-row','grid-column',
+             'grid-area', 'grid-row-gap','grid-column-gap','grid-gap','row-gap']},
+    {property:'columns', invalidValue: 'auto auto', auxProperties:['column-fill','column-gap','column-rule','column-span']},
+    {property:'transform',invalidValue: 'none', auxProperties:['transform-box','transform-origin','transform-style']},
+    {property:'border-width',invalidValue: '0px', auxProperties:['border-color','border-style', 'border-collapse',
+            'border-spacing', 'border-image', 'border-radius','box-sizing']}
+    ];
+
+var propertiesWithDefaultValue = [
+    {name: ['all'],dv:"", },
+    {name:['backdrop-filter','box-shadow','clear','float','max-width','max-height','resize',
+        'text-transform','transform'],dv:'none'},
+    {name:['top','bottom','left','right','clip','cursor','inline-size','image-rendering',
+            'isolation','line-break','table-layout','text-align-last','text-underline-position','z-index',
+            'text-rendering'],dv:'auto'},
+    {name:['line-height','white-space','word-break','word-wrap','content'],dv:'normal'},
+    {name:['margin','padding','min-width','min-height','text-indent','word-spacing'],dv:'0px'}
+    ];
+var propertyWithoutDefaultValue = [
+    // position & size
+    'position','padding','width','height',
+    // text related
+    'color','direction','text-align','text-decoration','text-overflow','writing-mode','vertical-align','font',
+    'animation', 'background','empty-cells','filter', 'list-style','object-fit','object-position','opacity',
+    'orphans','orientation','outline','overflow', 'overflow-wrap','transition', 'visibility','display','columns'];
+
+function Style(property, value) {return {'property': property, 'value':value}}
+
+
 /***
  * Get the non-default style property of ele
  * @param ele
  * @returns {Array}
  */
 function getValidStyles(ele) {
-    var stylePropertyMapReadOnly = ele.computedStyleMap();
+    var computedStyles = window.getComputedStyle(ele);
     var styles = [];
-    var defaultStyles = document.getElementsByTagName('html')[0].computedStyleMap()
-    for(const [property, value] of stylePropertyMapReadOnly ){
-        // 删除默认值属性
-        if(defaultStyles.get(property) !== value.toString() && nonZero(value.toString()))
-            styles.push({'property':property, 'value': value.toString()})
+    for (let mainProperty of mainProperties){
+        let value = computedStyles[mainProperty.property];
+        let validity = false
+        if(mainProperty.hasOwnProperty('validValue')){
+            validity = (value === mainProperty.validValue);
+        }else {
+            validity = (value !== mainProperty.invalidValue)
+        }
+        if(validity){
+            for(let auxProperty of mainProperty.auxProperties){
+                styles.push(Style(auxProperty, computedStyles[auxProperty]))
+            }
+        }
+    }
+    for(let property of propertiesWithDefaultValue){
+        let defaultValue = property.dv;
+        for(let name of property.name) {
+            let value = computedStyles[name];
+            if (value !== defaultValue)
+                styles.push(Style(name, value))
+        }
+    }
+    for(let property of propertyWithoutDefaultValue){
+        styles.push(Style(property, computedStyles[property]))
     }
     return styles;
 }
 
-function nonZero(value) {
-    let emptyExp = ['0px', '0', 'none', 'auto','normal'];
-    for(let i=0;i<emptyExp.length;i++){
-        if(value === emptyExp[i]) return false
-    }
-    return true
-}
 
 /**
  * Return the visibility of ele
