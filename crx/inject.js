@@ -27,6 +27,7 @@ log("Ready.",'info');
 let collection = [];
 let targetId = '';
 let oldBorderStyle = null;
+let hintBorderStyle = '1px solid blue';
 
 function isContain(mouseX, mouseY, dom) {
     if(!dom.getBoundingClientRect) return false;
@@ -44,6 +45,48 @@ function findDom(mouseX, mouseY, dom) {
     }
 }
 
+function loadCSSCors(stylesheet_uri) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', stylesheet_uri);
+    xhr.onload = function() {
+        xhr.onload = xhr.onerror = null;
+        if (xhr.status < 200 || xhr.status >= 300) {
+            console.error('style failed to load: ' + stylesheet_uri);
+        } else {
+            console.log('get ', stylesheet_uri ,' successfully');
+            var style_tag = document.createElement('style');
+            style_tag.appendChild(document.createTextNode(xhr.responseText));
+            document.head.appendChild(style_tag);
+        }
+    };
+    xhr.onerror = function() {
+        xhr.onload = xhr.onerror = null;
+        console.error('XHR CORS CSS fail:' + styleURI);
+    };
+    xhr.send();
+}
+
+// TODO: 父属性的继承rule无法获取
+function splitCssByRules(root) {
+    let splitRules = "";
+    let styleSheets = document.styleSheets;
+
+    for(let styleSheet of styleSheets){
+        try {
+            for (let cssRule of styleSheet.cssRules) {
+                let ele = root.querySelector(cssRule.selectorText)
+                if (ele) {
+                    splitRules += cssRule.cssText
+                    splitRules += '\n'
+                }
+            }
+        }catch (e) {
+            if (e instanceof DOMException){}
+        }
+    }
+    return splitRules
+}
+
 function handleClick(event) {
     log(`Mouse at (${event.clientX}, ${event.clientY})`, 'capture');
     event.preventDefault();
@@ -53,8 +96,10 @@ function handleClick(event) {
     findDom(event.clientX, event.clientY, document.documentElement);
     if (collection) {
         let target = collection[0];
-        oldBorderStyle = target.style.border;
-        target.style.border = '1px solid blue';
+        // Show hint border
+        oldBorderStyle = window.getComputedStyle(target)['border'];
+        log('Old border style:' + oldBorderStyle, 'info')
+        target.style.border = hintBorderStyle;
         if(target.id) targetId = target.id;
         else targetId = "DUI-target";
         log("UI id: " + targetId, 'capture');
@@ -64,6 +109,18 @@ function handleClick(event) {
 function start() {
     log('Capture start', 'capture');
     document.documentElement.addEventListener('click', handleClick,true);
+
+    // Get cross domain style sheet
+    for(let styleSheet of document.styleSheets){
+        try {
+            let cssRules = styleSheet.cssRules;
+        }catch (e) {
+            if (e instanceof DOMException){
+                loadCSSCors(styleSheet.href)
+            }
+        }
+    }
+
 }
 
 function confirm() {
@@ -71,7 +128,16 @@ function confirm() {
     if(collection){
         let target = collection[0];
         log(target.outerHTML, 'info');
-        chrome.runtime.sendMessage({'content': target.outerHTML})
+        // Recover origin border style
+        target.style.border = oldBorderStyle;
+        let subtree = target.outerHTML;
+        let cssRules = splitCssByRules(target);
+        log(subtree, 'info');
+        log(cssRules, 'info');
+        chrome.runtime.sendMessage({'content': {
+                'subtree': JSON.stringify(subtree),
+                'css':  JSON.stringify(cssRules)
+            }})
     }else{
         log('No element is selected.Exit.','info')
     }

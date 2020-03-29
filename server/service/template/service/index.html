@@ -4,11 +4,23 @@
     <meta charset="UTF-8">
     <title>Title</title>
 </head>
-<body>
+<body style="margin:0 ">
     <div id="display">
-        {% autoescape off %}
-          {{ content}}
-        {% endautoescape %}
     </div>
 </body>
+<style>
+    #display{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f9f9f9
+    }
+</style>
+<script>
+    let display = document.getElementById('display')
+    display.innerHTML = {% autoescape off %}{{ subtree }}{% endautoescape %};
+    let style_tag = document.createElement('style');
+    style_tag.appendChild(document.createTextNode( {% autoescape off %}{{ css }}{% endautoescape %}));
+    document.head.appendChild(style_tag);
+</script>
 </html>
